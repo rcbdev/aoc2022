@@ -2,27 +2,22 @@ const simulateRope = (moves, size = 2) => {
   const knots = new Array(size).fill(0).map(() => [0, 0]);
   const visited = new Set();
   visited.add("0-0");
-  const newMoves = moves.flatMap((move) =>
-    new Array(move.dist).fill({
-      dir: move.dir,
-      dist: 1,
-    })
-  );
+  const newMoves = moves.flatMap((move) => new Array(move.dist).fill(move.dir));
 
   newMoves.forEach((move) => {
     const head = knots[(0, 0)];
-    switch (move.dir) {
+    switch (move) {
       case "R":
-        head[0] += move.dist;
+        head[0] += 1;
         break;
       case "L":
-        head[0] -= move.dist;
+        head[0] -= 1;
         break;
       case "U":
-        head[1] += move.dist;
+        head[1] += 1;
         break;
       case "D":
-        head[1] -= move.dist;
+        head[1] -= 1;
         break;
     }
 
