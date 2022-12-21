@@ -36,10 +36,8 @@ export default async function run({ inputLines }) {
       .map((monkey) => [monkey.name, monkey])
   );
 
-  const part1Monkeys = JSON.parse(JSON.stringify(monkeys));
-
   const calculateNumber = (monkeyName) => {
-    const monkey = part1Monkeys[monkeyName];
+    const monkey = monkeys[monkeyName];
     if (monkey.result !== null) {
       return monkey.result;
     }
@@ -48,34 +46,67 @@ export default async function run({ inputLines }) {
     const right = calculateNumber(monkey.sum.right);
     const result = operators[monkey.sum.operator](left, right);
 
-    monkey.result = result;
     return result;
   };
 
   console.log(calculateNumber("root"));
 
-  const part2Monkeys = JSON.parse(JSON.stringify(monkeys));
-
-  const calculateNumber2 = (monkeyName) => {
+  const hasHuman = (monkeyName) => {
     if (monkeyName === "humn") {
-      // rubbish manual trial and error
-      return 3032671800353;
-    }
-    const monkey = part2Monkeys[monkeyName];
-    if (monkey.result !== null) {
-      return monkey.result;
+      return true;
     }
 
-    const left = calculateNumber2(monkey.sum.left);
-    const right = calculateNumber2(monkey.sum.right);
-    const result = operators[monkey.sum.operator](left, right);
+    const monkey = monkeys[monkeyName];
+    if (monkey.sum === null) {
+      return false;
+    }
 
-    monkey.result = result;
-    return result;
+    return hasHuman(monkey.sum.left) || hasHuman(monkey.sum.right);
   };
 
-  console.log(
-    calculateNumber2(part2Monkeys.root.sum.left) -
-      calculateNumber2(part2Monkeys.root.sum.right)
+  const leftHasHuman = hasHuman(monkeys.root.sum.left);
+  const target = calculateNumber(
+    leftHasHuman ? monkeys.root.sum.right : monkeys.root.sum.left
   );
+
+  const calculateReverse = (monkeyName) => {
+    const nextMonkey = Object.values(monkeys).find(
+      (monkey) =>
+        monkey.sum?.left === monkeyName || monkey.sum?.right === monkeyName
+    );
+
+    if (nextMonkey.name === "root") {
+      return target;
+    }
+
+    const result = calculateReverse(nextMonkey.name);
+
+    if (nextMonkey.sum.left === monkeyName) {
+      const right = calculateNumber(nextMonkey.sum.right);
+      switch (nextMonkey.sum.operator) {
+        case "+":
+          return result - right;
+        case "-":
+          return result + right;
+        case "*":
+          return result / right;
+        case "/":
+          return result * right;
+      }
+    } else {
+      const left = calculateNumber(nextMonkey.sum.left);
+      switch (nextMonkey.sum.operator) {
+        case "+":
+          return result - left;
+        case "-":
+          return left - result;
+        case "*":
+          return result / left;
+        case "/":
+          return left / result;
+      }
+    }
+  };
+
+  console.log(calculateReverse("humn"));
 }
