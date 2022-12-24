@@ -18,6 +18,7 @@ export default async function run({ inputLines }) {
     let rounds = 0;
 
     while (true) {
+      const blocked = {};
       obstacles.forEach((obstacle) => {
         switch (obstacle.type) {
           case ">":
@@ -45,38 +46,34 @@ export default async function run({ inputLines }) {
             }
             break;
         }
+        blocked[obstacle.location[0]] = blocked[obstacle.location[0]] ?? [];
+        blocked[obstacle.location[0]].push(obstacle.location[1]);
       });
 
-      const newOptions = [];
-
-      options.forEach((option) => {
-        const possibleMoves = [option];
+      let newOptions = options.flatMap((option) => {
+        const theseOptions = [option];
         for (let i = -1; i <= 1; i += 2) {
-          possibleMoves.push([option[0] + i, option[1]]);
-          possibleMoves.push([option[0], option[1] + i]);
+          theseOptions.push([option[0] + i, option[1]]);
+          theseOptions.push([option[0], option[1] + i]);
         }
 
-        const filteredMoves = possibleMoves.filter((move) => {
-          if (move[0] < 0 || move[1] < 0 || move[0] > maxY || move[1] > maxX) {
-            return false;
-          }
-          return !obstacles.some(
-            (obstacle) =>
-              obstacle.location[0] === move[0] &&
-              obstacle.location[1] === move[1]
-          );
-        });
-        if (filteredMoves.length) {
-          newOptions.push(...filteredMoves);
-        }
+        return theseOptions;
       });
-
-      options = newOptions.filter(
-        (option, i) =>
-          newOptions.findIndex(
-            (o) => o[0] === option[0] && o[1] === option[1]
-          ) === i
-      );
+      newOptions = newOptions.filter((move) => {
+        if (move[0] < 0 || move[1] < 0 || move[0] > maxY || move[1] > maxX) {
+          return false;
+        }
+        return !blocked[move[0]]?.includes(move[1]);
+      });
+      const covered = {};
+      options = newOptions.filter((option) => {
+        if (covered[option[0]]?.includes(option[1])) {
+          return false;
+        }
+        covered[option[0]] = covered[option[0]] ?? [];
+        covered[option[0]].push(option[1]);
+        return true;
+      });
       rounds++;
 
       if (
